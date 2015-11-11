@@ -14,6 +14,7 @@ namespace EncryptedEmailBridge
         private static string _extension = string.Empty;
         private static string _server = string.Empty;
         private static int _port;
+        private static string _portEncryption = string.Empty;
         private static string _sender = string.Empty;
         private static string _recipient = string.Empty;
         private static string _username = string.Empty;
@@ -60,21 +61,21 @@ namespace EncryptedEmailBridge
                     CleanupDirectory(_path + _archiveDir + "\\", _extension);
                     CleanupDirectory(_path + _archiveDir + "\\", "eml");
                 }
-                
-                // write to logfile
-                try
+            }
+
+            // write to logfile
+            try
+            {
+                using (StreamWriter w = File.AppendText(_appDir + _logDir + "\\" + _dateStamp + ".txt"))
                 {
-                    using (StreamWriter w = File.AppendText(_appDir + _logDir + "\\" + _dateStamp + ".txt"))
-                    {
-                        w.WriteLine("Datum : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                        w.WriteLine(_log);
-                        w.WriteLine("---------------------------");
-                    }
+                    w.WriteLine("Datum : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                    w.WriteLine(_log);
+                    w.WriteLine("---------------------------");
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine("fout schrijven log: " + e);
-                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("fout schrijven log: " + e);
             }
         }
         private static void InBound()
@@ -100,7 +101,7 @@ namespace EncryptedEmailBridge
                 // do for each attachment
                 for (int j = 0; j < email.NumAttachments; j++)
                 {
-                    string attachment = DateTime.Now.ToString("yyyyMMdd_HHmmss_ffff") + "_" + email.GetAttachmentFilename(j);
+                    string attachment = _dateTimeStamp + "_" + email.GetAttachmentFilename(j);
                     email.SetAttachmentFilename(j, attachment);
 
                     // save attachment to filesystem
@@ -155,8 +156,8 @@ namespace EncryptedEmailBridge
                 // archive email message as eml
                 try
                 {
-                    email.SaveEml(_path + _archiveDir + "\\" + DateTime.Now.ToString("yyyyMMdd_HHmmss_ffff") + ".eml");
-                    AddLog("email " + DateTime.Now.ToString("yyyyMMdd_HHmmss_ffff") + ".eml" + " saved");
+                    email.SaveEml(_path + _archiveDir + "\\" + _dateTimeStamp + ".eml");
+                    AddLog("email " + _dateTimeStamp + ".eml" + " saved");
                 } catch (Exception e) { AddLog("error saving eml " + e); }
             }
             mailman.DeleteBundle(bundle);
@@ -198,9 +199,24 @@ namespace EncryptedEmailBridge
             {
                 MailMan mailman = new MailMan();
                 mailman.UnlockComponent(_chilkatLicense);
-                mailman.AutoFix = true;
+                mailman.AutoFix = false;
                 mailman.SmtpHost = _server;
                 mailman.SmtpPort = _port;
+                if (_portEncryption == "ssl") // ssl / starttls / plain
+                {
+                    mailman.SmtpSsl = true;
+                    mailman.StartTLS = false;
+                }
+                else if (_portEncryption == "starttls")
+                {
+                    mailman.SmtpSsl = false;
+                    mailman.StartTLS = true;
+                }
+                else
+                {
+                    mailman.SmtpSsl = false;
+                    mailman.StartTLS = false;
+                }
                 mailman.SmtpUsername = _username;
                 mailman.SmtpPassword = _password;
                 Email email = new Email();
@@ -231,6 +247,7 @@ namespace EncryptedEmailBridge
                     _extension = ConfigurationManager.AppSettings["extension"];
                     _server = ConfigurationManager.AppSettings["server"];
                     Int32.TryParse(ConfigurationManager.AppSettings["port"], out _port);
+                    _portEncryption = ConfigurationManager.AppSettings["portEncryption"];
                     _sender = ConfigurationManager.AppSettings["sender"];
                     _recipient = ConfigurationManager.AppSettings["recipient"];
                     _username = ConfigurationManager.AppSettings["username"];
@@ -245,7 +262,8 @@ namespace EncryptedEmailBridge
                         !string.IsNullOrEmpty(_path) && 
                         !string.IsNullOrEmpty(_extension) && 
                         !string.IsNullOrEmpty(_server) &&
-                        _port != 0 && 
+                        _port != 0 &&
+                        !string.IsNullOrEmpty(_portEncryption) &&
                         !string.IsNullOrEmpty(_sender) &&
                         !string.IsNullOrEmpty(_recipient) &&
                         !string.IsNullOrEmpty(_username) &&
@@ -266,20 +284,33 @@ namespace EncryptedEmailBridge
         }
         private static bool CreateDirectories()
         {
-            try
+            bool local = true;
+            if (_path.Length > 3 && _path.Substring(_path.Length - 1, 1) != "\\") { _path += "\\"; }
+            string[] dirs =
             {
-                if (_path.Length > 3 && _path.Substring(_path.Length - 1, 1) != "\\") { _path += "\\"; }
-                if (!Directory.Exists(_path)) { Directory.CreateDirectory(_path); }
-                if (!Directory.Exists(_path + _archiveDir)) { Directory.CreateDirectory(_path + _archiveDir); }
-                if (!Directory.Exists(_appDir + _logDir)) { Directory.CreateDirectory(_appDir + _logDir); }
-                if (!Directory.Exists(_appDir + _workDir)) { Directory.CreateDirectory(_appDir + _workDir); }
-                return true;
-            }
-            catch (Exception e)
+                _appDir + _logDir,
+                _appDir + _workDir,
+                _path,
+                _path + _archiveDir
+            };
+
+            foreach (string dir in dirs)
             {
-                AddLog("create directories: error > " + e);
-                return false;
+                try
+                {
+                    if (!Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                        AddLog("directory created: " + dir);
+                    }
+                }
+                catch (Exception e)
+                {
+                    AddLog("create directory error: " + dir + " > " + e);
+                    local = false;
+                }
             }
+            return local;
         }
         private static void ArchiveFile(string filePath, string fileName)
         {
