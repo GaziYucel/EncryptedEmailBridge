@@ -27,9 +27,9 @@ Bridge between two or more locations on the Internet to send / receive files, us
 
 - Microsoft Windows x64
 - Microsoft .NET Framework 4.5
-- Chilkat 64-bit .NET 4.5 Assembly for VS2013 (_dependencies\ChilkatDotNet45.dll)
+- Chilkat 64-bit .NET 4.5 Assembly for VS2013
 - Microsoft Visual C++ 2013 Redistributable x64
-- Ionic's Zip Library 1.10.1.0 (_dependencies\DotNetZip.dll)
+- Ionic's Zip Library 1.10.1.0
 
 ### Windows Task Scheduler
 
