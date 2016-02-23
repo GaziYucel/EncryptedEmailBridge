@@ -81,8 +81,19 @@ namespace EncryptedEmailBridge
             #endregion
 
             // get emails and copy to bundle object
-            try { bundle = mailman.CopyMail(); } catch (Exception e) { AddLog("error getting emails " + e); }
-            if (bundle == null) { return; }
+            try
+            { 
+                bundle = mailman.CopyMail();
+            }
+            catch (Exception e)
+            {
+                AddLog("error getting emails " + e);
+            }
+            if (bundle == null)
+            {
+                AddLog("error getting mail  " + mailman.LastErrorText);
+                return;
+            }
 
             // do for each email
             for (int emailCounter = 0; emailCounter <= bundle.MessageCount - 1; emailCounter++)
@@ -107,7 +118,10 @@ namespace EncryptedEmailBridge
                     email.SaveEml(_path + _archiveDir + "\\" + _dateTimeStamp + "_" + emailCounter + ".eml");
                     AddLog("email " + _dateTimeStamp + "_" + emailCounter + ".eml" + " saved");
                 }
-                catch (Exception e) { AddLog("error saving eml " + e); }
+                catch (Exception e)
+                {
+                    AddLog("error saving eml " + e);
+                }
             }
             mailman.DeleteBundle(bundle);
             mailman.Pop3EndSession();
@@ -193,7 +207,10 @@ namespace EncryptedEmailBridge
                     zip.Save(_path + attachment);
                 }
             }
-            catch (Exception e) { AddLog("error compressing files " + e); }
+            catch (Exception e)
+            {
+                AddLog("error compressing files " + e);
+            }
 
             // send mail if attachment found
             if (File.Exists(_path + attachment))
@@ -407,7 +424,15 @@ namespace EncryptedEmailBridge
                 using (StreamWriter w = File.AppendText(_appDir + _logDir + "\\" + _dateStamp + ".txt"))
                 {
                     w.WriteLine("Datum : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                    w.WriteLine(_log);
+                    if (!string.IsNullOrEmpty(_log))
+                    {
+                        w.WriteLine(_log);
+                    }
+                    else
+                    {
+                        w.WriteLine("niks te verwerken");
+                    }
+                    
                     w.WriteLine("---------------------------");
                 }
             }

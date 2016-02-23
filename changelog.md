@@ -1,5 +1,13 @@
 # Change Log
 
+### Version 1.2.1
+Notes
+    * 
+Bugfixes
+    * 
+Enhancements
+    * logging error while connecting to pop3 inbound
+
 ### Version 1.2.0
 Notes
     * 
