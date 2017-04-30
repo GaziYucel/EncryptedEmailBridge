@@ -44,13 +44,16 @@ namespace EncryptedEmailBridge
                 if (_method == "in") InBound();
 
                 // cleanup log files older than history
-                if (_cleanupLog) CleanupDirectory(_appDir + _logDir + "\\", "txt");
+                if (_cleanupLog) CleanupDirectory(_path + _logDir + "\\", "txt");
 
                 // cleanup archived files older than history
                 if (_cleanupArchive) CleanupDirectory(_path + _archiveDir + "\\", _extension);
                 if (_cleanupArchive) CleanupDirectory(_path + _archiveDir + "\\", "eml");
             }
-            WriteLog();
+            if(!WriteLog())
+            {
+                Console.WriteLine(_log);
+            }
         }
         private static void InBound()
         {
@@ -106,10 +109,10 @@ namespace EncryptedEmailBridge
                     email.SetAttachmentFilename(attachmentCounter, attachment);
 
                     // save attachment to filesystem
-                    try { email.SaveAttachedFile(attachmentCounter, _appDir + _workDir); } catch (Exception e) { AddLog("error saving attachment  " + attachment + " " + e); }
+                    try { email.SaveAttachedFile(attachmentCounter, _path + _workDir); } catch (Exception e) { AddLog("error saving attachment  " + attachment + " " + e); }
 
                     // save attachment items
-                    SaveAttachmentsItems(_appDir + _workDir + "\\", _path, attachment, emailCounter, attachmentCounter);
+                    SaveAttachmentsItems(_path + _workDir + "\\", _path, attachment, emailCounter, attachmentCounter);
                 }
 
                 // archive email message as eml
@@ -308,55 +311,59 @@ namespace EncryptedEmailBridge
         }
         private static bool FillVariables()
         {
-            if (File.Exists(_appName + ".exe.config"))
+            try
             {
-                try
-                {
-                    _method = ConfigurationManager.AppSettings["method"];
-                    _path = ConfigurationManager.AppSettings["path"];
-                    _extension = ConfigurationManager.AppSettings["extension"];
-                    _server = ConfigurationManager.AppSettings["server"];
-                    Int32.TryParse(ConfigurationManager.AppSettings["port"], out _port);
-                    _portEncryption = ConfigurationManager.AppSettings["portEncryption"];
-                    _sender = ConfigurationManager.AppSettings["sender"];
-                    _recipient = ConfigurationManager.AppSettings["recipient"];
-                    _username = ConfigurationManager.AppSettings["username"];
-                    _password = ConfigurationManager.AppSettings["password"];
-                    _secret = ConfigurationManager.AppSettings["secret"];
-                    Int32.TryParse(ConfigurationManager.AppSettings["history"], out _history);
-                    _cleanupLog = Convert.ToBoolean(ConfigurationManager.AppSettings["cleanupLog"]);
-                    _cleanupArchive = Convert.ToBoolean(ConfigurationManager.AppSettings["cleanupArchive"]);
+                _method = ConfigurationManager.AppSettings["method"];
+                _path = ConfigurationManager.AppSettings["path"];
+                _extension = ConfigurationManager.AppSettings["extension"];
+                _server = ConfigurationManager.AppSettings["server"];
+                Int32.TryParse(ConfigurationManager.AppSettings["port"], out _port);
+                _portEncryption = ConfigurationManager.AppSettings["portEncryption"];
+                _sender = ConfigurationManager.AppSettings["sender"];
+                _recipient = ConfigurationManager.AppSettings["recipient"];
+                _username = ConfigurationManager.AppSettings["username"];
+                _password = ConfigurationManager.AppSettings["password"];
+                _secret = ConfigurationManager.AppSettings["secret"];
+                Int32.TryParse(ConfigurationManager.AppSettings["history"], out _history);
+                _cleanupLog = Convert.ToBoolean(ConfigurationManager.AppSettings["cleanupLog"]);
+                _cleanupArchive = Convert.ToBoolean(ConfigurationManager.AppSettings["cleanupArchive"]);
 
-                    if (
-                        !string.IsNullOrEmpty(_method) &&
-                        !string.IsNullOrEmpty(_path) && 
-                        !string.IsNullOrEmpty(_extension) && 
-                        !string.IsNullOrEmpty(_server) &&
-                        _port != 0 &&
-                        !string.IsNullOrEmpty(_portEncryption) &&
-                        !string.IsNullOrEmpty(_sender) &&
-                        !string.IsNullOrEmpty(_recipient) &&
-                        !string.IsNullOrEmpty(_username) &&
-                        !string.IsNullOrEmpty(_password) &&
-                        !string.IsNullOrEmpty(_secret) &&
-                        _history != 0
-                    )
-                    {
-                        return true;
-                    }
-                }
-                catch (Exception e)
+                if (
+                    !string.IsNullOrEmpty(_method) &&
+                    !string.IsNullOrEmpty(_path) &&
+                    !string.IsNullOrEmpty(_extension) &&
+                    !string.IsNullOrEmpty(_server) &&
+                    _port != 0 &&
+                    !string.IsNullOrEmpty(_portEncryption) &&
+                    !string.IsNullOrEmpty(_sender) &&
+                    !string.IsNullOrEmpty(_recipient) &&
+                    !string.IsNullOrEmpty(_username) &&
+                    !string.IsNullOrEmpty(_password) &&
+                    !string.IsNullOrEmpty(_secret) &&
+                    _history != 0
+                )
                 {
-                    AddLog("configuration: error > " + e);
+                    return true;
                 }
+            }
+            catch (Exception e)
+            {
+                AddLog("configuration: error > " + e);
             }
             return false;
         }
         private static bool CreateDirectories()
         {
             bool local = true;
-            if (_path.Length > 3 && _path.Substring(_path.Length - 1, 1) != "\\") { _path += "\\"; }
-            string[] dirs = { _appDir + _logDir, _appDir + _workDir, _path, _path + _archiveDir };
+            if (_path.Length > 3 && _path.Substring(_path.Length - 1, 1) != "\\")
+            {
+                _path += "\\";
+            }
+            string[] dirs = {
+                _path,
+                _path + _logDir,
+                _path + _workDir,
+                _path + _archiveDir };
 
             foreach (string dir in dirs)
             {
@@ -417,11 +424,11 @@ namespace EncryptedEmailBridge
 
             _log += logMessage;
         }
-        private static void WriteLog()
+        private static bool WriteLog()
         {
             try
             {
-                using (StreamWriter w = File.AppendText(_appDir + _logDir + "\\" + _dateStamp + ".txt"))
+                using (StreamWriter w = File.AppendText(_path + _logDir + "\\" + _dateStamp + ".txt"))
                 {
                     w.WriteLine("Datum : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
                     if (!string.IsNullOrEmpty(_log))
@@ -435,10 +442,12 @@ namespace EncryptedEmailBridge
                     
                     w.WriteLine("---------------------------");
                 }
+                return true;
             }
             catch (Exception e)
             {
-                Console.WriteLine("fout schrijven log: " + e);
+                AddLog("fout schrijven log: " + e);
+                return false;
             }
         }
         private static void DeleteFile(string filePath, string fileName)

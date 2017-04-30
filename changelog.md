@@ -1,5 +1,13 @@
 # Change Log
 
+## Version 1.3.0
+Notes
+    * 
+Bugfixes
+    * 
+Enhancements
+    * work directory moved to given path in config
+
 ### Version 1.2.1
 Notes
     * 
