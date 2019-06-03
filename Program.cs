@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Configuration;
 using System.IO;
-using Chilkat;
 using Ionic.Zip;
-using Ionic.Zlib;
+using MimeKit;
+using MailKit;
+using MailKit.Search;
+using MailKit.Net.Imap;
+using MailKit.Net.Smtp;
 
 namespace EncryptedEmailBridge
 {
@@ -14,7 +17,7 @@ namespace EncryptedEmailBridge
         private static string _extension = string.Empty;
         private static string _server = string.Empty;
         private static int _port;
-        private static string _portEncryption = string.Empty;
+        private static bool _portEncryption = false;
         private static string _sender = string.Empty;
         private static string _recipient = string.Empty;
         private static string _username = string.Empty;
@@ -31,10 +34,8 @@ namespace EncryptedEmailBridge
         private static string _log = string.Empty;
         private static string _logDir = "log";
         private static string _archiveDir = "archive";
-        private static string _appDir = Environment.CurrentDirectory + "\\";
         private static string _workDir = "work";
         private static int _maxLengthFileName = 128;
-        private static string _chilkatLicense = "ADD-VALID-LICENSE-KEY";
 
         static void Main()
         {
@@ -50,84 +51,64 @@ namespace EncryptedEmailBridge
                 if (_cleanupArchive) CleanupDirectory(_path + _archiveDir + "\\", _extension);
                 if (_cleanupArchive) CleanupDirectory(_path + _archiveDir + "\\", "eml");
             }
-            if(!WriteLog())
+            if (!WriteLog())
             {
                 Console.WriteLine(_log);
             }
         }
         private static void InBound()
         {
-            #region mail object
-            MailMan mailman = new MailMan();
-            mailman.UnlockComponent(_chilkatLicense);
-            mailman.AutoFix = false;
-            mailman.MailHost = _server;
-            mailman.MailPort = _port;
-            if (_portEncryption == "ssl") // ssl / starttls / plain
-            {
-                mailman.PopSsl = true;
-                mailman.Pop3Stls = false;
-            }
-            else if (_portEncryption == "starttls")
-            {
-                mailman.PopSsl = false;
-                mailman.Pop3Stls = true;
-            }
-            else
-            {
-                mailman.PopSsl = false;
-                mailman.Pop3Stls = false;
-            }
-            mailman.PopUsername = _username;
-            mailman.PopPassword = _password;
-            EmailBundle bundle = null;
-            #endregion
+            ImapClient imapClient = new ImapClient();
+            imapClient.Connect(_server, _port, _portEncryption);
+            imapClient.Authenticate(_username, _password);
 
-            // get emails and copy to bundle object
-            try
-            { 
-                bundle = mailman.CopyMail();
-            }
-            catch (Exception e)
-            {
-                AddLog("error getting emails " + e);
-            }
-            if (bundle == null)
-            {
-                AddLog("error getting mail  " + mailman.LastErrorText);
-                return;
-            }
+            var inbox = imapClient.Inbox;
+            inbox.Open(FolderAccess.ReadOnly);
 
-            // do for each email
-            for (int emailCounter = 0; emailCounter <= bundle.MessageCount - 1; emailCounter++)
+            var uids = inbox.Search(SearchQuery.All);
+
+            int messageCounter = 0;
+            foreach (var uid in uids)
             {
-                Email email = bundle.GetEmail(emailCounter);
+                var message = inbox.GetMessage(uid);
+                Console.WriteLine("Subject: {0}", message.Subject);
+
                 // do for each attachment
-                for (int attachmentCounter = 0; attachmentCounter < email.NumAttachments; attachmentCounter++)
+                var attachments = message.Attachments;
+                int attachmentCounter = 0;
+                foreach (var attachment in attachments)
                 {
-                    string attachment = _dateTimeStamp + "_" + attachmentCounter + "_" + email.GetAttachmentFilename(attachmentCounter);
-                    email.SetAttachmentFilename(attachmentCounter, attachment);
+                    string fileName;
+                    Stream stream;
 
-                    // save attachment to filesystem
-                    try { email.SaveAttachedFile(attachmentCounter, _path + _workDir); } catch (Exception e) { AddLog("error saving attachment  " + attachment + " " + e); }
+                    if (attachment is MessagePart)
+                    {
+                        fileName = _dateTimeStamp + "_" + attachmentCounter + "_" + attachment.ContentDisposition?.FileName;
+                        var rfc822 = (MessagePart)attachment;
 
-                    // save attachment items
-                    SaveAttachmentsItems(_path + _workDir + "\\", _path, attachment, emailCounter, attachmentCounter);
+                        using (stream = File.Create(fileName))
+                            rfc822.Message.WriteTo(stream);
+                    }
+                    else
+                    {
+                        var part = (MimePart)attachment;
+                        fileName = _dateTimeStamp + "_" + attachmentCounter + "_" + part.FileName;
+
+                        using (stream = File.Create(fileName))
+                            part.Content.DecodeTo(stream);
+                    }
+
+                    attachmentCounter++;
                 }
 
-                // archive email message as eml
-                try
-                {
-                    email.SaveEml(_path + _archiveDir + "\\" + _dateTimeStamp + "_" + emailCounter + ".eml");
-                    AddLog("email " + _dateTimeStamp + "_" + emailCounter + ".eml" + " saved");
-                }
-                catch (Exception e)
-                {
-                    AddLog("error saving eml " + e);
-                }
+                message.WriteTo(FormatOptions.Default, _path + _archiveDir + "\\" + _dateTimeStamp + "_" + messageCounter + ".eml");
+
+                inbox.Store(uid, new StoreFlagsRequest(StoreAction.Add, MessageFlags.Deleted));
+
+                messageCounter++;
             }
-            mailman.DeleteBundle(bundle);
-            mailman.Pop3EndSession();
+
+            imapClient.Disconnect(true);
         }
         private static void SaveAttachmentsItems(string pathWork, string pathOut, string attachment, int emailCounter, int attachmentCounter)
         {
@@ -236,51 +217,25 @@ namespace EncryptedEmailBridge
         {
             bool local = true;
 
-            try
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_sender, _sender));
+            message.To.Add(new MailboxAddress(_recipient, _recipient));
+            message.Subject = "Sent with " + _appName + " (attachment " + attachment + ")";
+            message.Body = new TextPart("plain") { Text = "This message was automatically sent with " + _appName + "." };
+
+            var builder = new BodyBuilder();
+            builder.TextBody = "This message was automatically sent with " + _appName + ".";
+            builder.Attachments.Add(path + attachment);
+            message.Body = builder.ToMessageBody();
+
+            using (var client = new SmtpClient())
             {
-                MailMan mailman = new MailMan();
-                mailman.UnlockComponent(_chilkatLicense);
-                mailman.AutoFix = false;
-                mailman.SmtpHost = _server;
-                mailman.SmtpPort = _port;
-                if (_portEncryption == "ssl") // ssl / starttls / plain
-                {
-                    mailman.SmtpSsl = true;
-                    mailman.StartTLS = false;
-                }
-                else if (_portEncryption == "starttls")
-                {
-                    mailman.SmtpSsl = false;
-                    mailman.StartTLS = true;
-                }
-                else
-                {
-                    mailman.SmtpSsl = false;
-                    mailman.StartTLS = false;
-                }
-                mailman.SmtpUsername = _username;
-                mailman.SmtpPassword = _password;
-                Email email = new Email();
-                email.From = _sender;
-                email.AddTo(_recipient, _recipient);
-                email.Subject = "Sent with " + _appName + " (attachment " + attachment + ")";
-                email.Body = "This message was automatically sent with " + _appName + ".";
-                email.AddFileAttachment(path + attachment);
-                if (mailman.SendEmail(email))
-                {
-                    AddLog("email sent with attachment " + attachment);
-                }
-                else
-                {
-                    AddLog("error sending mail  " + mailman.LastErrorText);
-                    local = false;
-                }
-                mailman.CloseSmtpConnection();
-            }
-            catch (Exception e)
-            {
-                AddLog("error sending mail " + e);
-                local = false;
+                client.Connect(_server, _port, _portEncryption);
+                client.Authenticate(_username, _password);
+                client.Send(message);
+                client.Disconnect(true);
+
+                local = true;
             }
 
             return local;
@@ -318,7 +273,15 @@ namespace EncryptedEmailBridge
                 _extension = ConfigurationManager.AppSettings["extension"];
                 _server = ConfigurationManager.AppSettings["server"];
                 Int32.TryParse(ConfigurationManager.AppSettings["port"], out _port);
-                _portEncryption = ConfigurationManager.AppSettings["portEncryption"];
+                string portEncryption = ConfigurationManager.AppSettings["portEncryption"];
+                if (portEncryption == "ssl" || portEncryption == "starttls") // ssl / starttls / plain
+                {
+                    _portEncryption = true;
+                }
+                else
+                {
+                    _portEncryption = false;
+                }
                 _sender = ConfigurationManager.AppSettings["sender"];
                 _recipient = ConfigurationManager.AppSettings["recipient"];
                 _username = ConfigurationManager.AppSettings["username"];
@@ -334,7 +297,7 @@ namespace EncryptedEmailBridge
                     !string.IsNullOrEmpty(_extension) &&
                     !string.IsNullOrEmpty(_server) &&
                     _port != 0 &&
-                    !string.IsNullOrEmpty(_portEncryption) &&
+                    !string.IsNullOrEmpty(portEncryption) &&
                     !string.IsNullOrEmpty(_sender) &&
                     !string.IsNullOrEmpty(_recipient) &&
                     !string.IsNullOrEmpty(_username) &&
@@ -439,7 +402,7 @@ namespace EncryptedEmailBridge
                     {
                         w.WriteLine("niks te verwerken");
                     }
-                    
+
                     w.WriteLine("---------------------------");
                 }
                 return true;
