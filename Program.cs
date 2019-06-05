@@ -393,14 +393,14 @@ namespace EncryptedEmailBridge
             {
                 using (StreamWriter w = File.AppendText(_path + _logDir + "\\" + _dateStamp + ".txt"))
                 {
-                    w.WriteLine("Datum : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                    w.WriteLine("Date : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
                     if (!string.IsNullOrEmpty(_log))
                     {
                         w.WriteLine(_log);
                     }
                     else
                     {
-                        w.WriteLine("niks te verwerken");
+                        w.WriteLine("nothing to do");
                     }
 
                     w.WriteLine("---------------------------");
@@ -409,7 +409,7 @@ namespace EncryptedEmailBridge
             }
             catch (Exception e)
             {
-                AddLog("fout schrijven log: " + e);
+                AddLog("error writing to file: " + e);
                 return false;
             }
         }

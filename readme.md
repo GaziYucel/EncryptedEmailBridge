@@ -26,10 +26,21 @@ Bridge between two or more locations on the Internet to send / receive files, us
 ### Requirements
 
 - Microsoft Windows x64
-- Microsoft .NET Framework 4.5
-- Chilkat 64-bit .NET 4.5 Assembly for VS2013
-- Microsoft Visual C++ 2013 Redistributable x64
-- Ionic's Zip Library 1.10.1.0
+- Microsoft .NET Framework 4.8
+
+### Dependencies
+
+- DotNetZip 1.16.0
+- MailKit 3.1.1
+- MimeKit 3.1.1
+- BouncyCastle.Crypto 1.9.0
+- System.Buffers 4.5.1
+
+### Development
+
+- git clone https://github.com/GaziYucel/EncryptedEmailBridge
+- open in Visual Studio Community 2022
+- open pull request
 
 ### Windows Task Scheduler
 

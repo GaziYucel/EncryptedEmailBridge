@@ -1,5 +1,14 @@
 # Change Log
 
+### Version 1.4.1
+
+Notes
+    * readme
+Bugfixes
+    * translations
+Enhancements
+    * 
+
 ### Version 1.4.0
 
 Notes
