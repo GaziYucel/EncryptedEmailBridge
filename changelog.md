@@ -1,5 +1,18 @@
 # Change Log
 
+### Version 1.5.0
+
+Notes
+    * Methods split into their own classes under /Classes
+    * License file added
+    * Conduct file added
+    * Relative dirs moved to App.config
+    * Packages updated
+Bugfixes
+    * 
+Enhancements
+    * 
+
 ### Version 1.4.1
 
 Notes

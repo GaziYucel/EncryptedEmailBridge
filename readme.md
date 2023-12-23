@@ -1,48 +1,54 @@
-# Encrypted Email Bridge
-
+Encrypted Email Bridge
+---------------------
 Bridge between two or more locations on the Internet to send / receive files, using an email server / account.
 
-### Installation
-
+Installation
+---------------------
 - copy the EncryptedEmailBridge folder to the desired location for example c:\EncryptedEmailBridge
 
-### Configuration
-
+Configuration
+---------------------
 - configure the settings in EncryptedEmailBridge.exe.config (App.config)
 - in this file each setting is explained
 
-### Inbound
+Windows Task Scheduler
+---------------------
+- schedule a windows task for EncryptedEmailBridge.exe
+- point the start folder to the EncryptedEmailBridge folder
 
+Features Inbound
+---------------------
 - emails are retrieved via pop3
 - all emails on the server are deleted
 - attachments are saved
 - if the attachment is an (encrypted) zip, it is first (decrypted), extracted and stored
 - all attachments get a date timestamp prefix
 
-### Outbound
-
+Features Outbound
+---------------------
 - all files with certain extension in the folder are encrypted compressed and sent
 
-### Requirements
-
+Requirements
+---------------------
 - Microsoft Windows x64
 - Microsoft .NET Framework 4.8
 
-### Dependencies
+Dependencies
+---------------------
+- See [packages.config](packages.config)
 
-- DotNetZip 1.16.0
-- MailKit 3.1.1
-- MimeKit 3.1.1
-- BouncyCastle.Crypto 1.9.0
-- System.Buffers 4.5.1
-
-### Development
-
+Development
+---------------------
 - git clone https://github.com/GaziYucel/EncryptedEmailBridge
 - open in Visual Studio Community 2022
-- open pull request
+- update / install dependent packackes with nuget
 
-### Windows Task Scheduler
+Contribute
+---------------------
+All help is welcome: asking questions, providing documentation, testing, or even development.
 
-- schedule a windows task for EncryptedEmailBridge.exe
-- point the start folder to the EncryptedEmailBridge folder
+Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md). By participating in this project you agree to abide by its terms.
+
+License
+---------------------
+This project is published under GNU General Public License, Version 3.
