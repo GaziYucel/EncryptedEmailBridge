@@ -79,8 +79,8 @@
     <Reference Include="ChilkatDotNet45, Version=9.5.0.69, Culture=neutral, PublicKeyToken=eb5fc1fc52ef09bd, processorArchitecture=AMD64">
       <HintPath>packages\chilkat-x64.9.5.0.69\lib\net452\ChilkatDotNet45.dll</HintPath>
     </Reference>
-    <Reference Include="DotNetZip, Version=1.10.1.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
-      <HintPath>packages\DotNetZip.1.10.1\lib\net20\DotNetZip.dll</HintPath>
+    <Reference Include="DotNetZip, Version=1.11.0.0, Culture=neutral, PublicKeyToken=6583c7c814667745">
+      <HintPath>packages\DotNetZip.1.11.0\lib\net20\DotNetZip.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
