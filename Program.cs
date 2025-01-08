@@ -1,5 +1,7 @@
 ﻿using EncryptedEmailBridge.Classes;
 using System;
+using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace EncryptedEmailBridge
 {
@@ -7,31 +9,34 @@ namespace EncryptedEmailBridge
     {
         static void Main()
         {
-            if (Const.FillVariables() && Util.CreateDirectories())
+            if (!Util.CheckRequirements())
             {
-                // inbound
-                if (Const.Method == "out")
-                {
-                    OutBound outBound = new OutBound();
-                    outBound.Execute();
-                }
-
-                // outbound
-                if (Const.Method == "in")
-                {
-                    InBound inBound = new InBound();
-                    inBound.Execute();
-                }
-
-                // cleanup log files older than HistoryToKeepInDays
-                if (Const.CleanUpLog) Util.CleanupDirectory(Const.RootPath + Const.RelativeLogDir + "\\", "log");
-
-                // cleanup archived files older than HistoryToKeepInDays
-                if (Const.CleanUpArchive) Util.CleanupDirectory(Const.RootPath + Const.RelativeArchiveDir + "\\", Const.Extension);
-                if (Const.CleanUpArchive) Util.CleanupDirectory(Const.RootPath + Const.RelativeArchiveDir + "\\", "eml");
+                Console.WriteLine(Log.message);
+                return;
             }
 
-            if (!Log.WriteLog()) Console.WriteLine(Log.log);
+            switch (Const.Method)
+            {
+                case "out":
+                    OutBound outBound = new OutBound();
+                    outBound.Execute();
+                    break;
+                case "in":
+                    InBound inBound = new InBound();
+                    inBound.Execute();
+                    break;
+                default:
+                    break;
+            }
+
+            // cleanup log files older than HistoryToKeepInDays
+            if (Const.CleanUpLog) Util.CleanupDirectory(Const.RootPath + Const.LogDirName + "\\", "log");
+
+            // cleanup archived files older than HistoryToKeepInDays
+            if (Const.CleanUpArchive) Util.CleanupDirectory(Const.RootPath + Const.ArchiveDirName + "\\", Const.Extension);
+            if (Const.CleanUpArchive) Util.CleanupDirectory(Const.RootPath + Const.ArchiveDirName + "\\", "eml");
+
+            Log.Write();
         }
     }
 }

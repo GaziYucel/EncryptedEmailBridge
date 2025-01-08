@@ -53,7 +53,7 @@ namespace EncryptedEmailBridge.Classes
                     attachmentCounter++;
                 }
 
-                message.WriteTo(FormatOptions.Default, Const.RootPath + Const.RelativeArchiveDir + "\\" + Const.CurrentDateTimeStamp +
+                message.WriteTo(FormatOptions.Default, Const.RootPath + Const.ArchiveDirName + "\\" + Const.CurrentDateTimeStamp +
                     "_" + messageCounter + ".eml");
 
                 inbox.Store(uid, new StoreFlagsRequest(StoreAction.Add, MessageFlags.Deleted));

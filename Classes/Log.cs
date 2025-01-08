@@ -5,30 +5,38 @@ namespace EncryptedEmailBridge.Classes
 {
     internal static class Log
     {
-        public static string log = string.Empty;
+        public static string message = string.Empty;
 
-        public static void AddLog(string logMessage)
+        public static void Add(string logMessage)
         {
             logMessage = logMessage.Replace(Environment.NewLine, " ");
 
-            if (!string.IsNullOrEmpty(log))
+            if (!string.IsNullOrEmpty(message))
             {
-                log += Environment.NewLine;
+                message += Environment.NewLine;
             }
 
-            log += logMessage;
+            message += logMessage;
         }
 
-        public static bool WriteLog()
+        public static bool Write()
         {
             try
             {
-                using (StreamWriter w = File.AppendText(Const.RootPath + Const.RelativeLogDir + "\\" + Const.CurrentDateStamp + ".log"))
+                string logFile = Const.RootPath + Const.LogDirName + "\\" + Const.CurrentDateStamp + ".log";
+
+                Console.WriteLine(logFile);
+
+                if (!File.Exists(logFile)) {
+                    File.CreateText(logFile);
+                }
+
+                using (StreamWriter w = File.AppendText(logFile))
                 {
                     w.WriteLine("Date : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                    if (!string.IsNullOrEmpty(log))
+                    if (!string.IsNullOrEmpty(message))
                     {
-                        w.WriteLine(log);
+                        w.WriteLine(message);
                     }
                     else
                     {
@@ -41,7 +49,7 @@ namespace EncryptedEmailBridge.Classes
             }
             catch (Exception e)
             {
-                AddLog("error writing to file: " + e);
+                Add("error writing to file: " + e);
                 return false;
             }
         }

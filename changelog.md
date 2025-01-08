@@ -1,5 +1,15 @@
 # Change Log
 
+### Version 1.6.0
+
+Notes
+    * DotNetZip replaced by ProDotNetZip
+    * Minor refactoring
+Bugfixes
+    * 
+Enhancements
+    * 
+
 ### Version 1.5.0
 
 Notes

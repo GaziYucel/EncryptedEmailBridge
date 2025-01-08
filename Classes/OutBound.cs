@@ -35,7 +35,7 @@ namespace EncryptedEmailBridge.Classes
             }
             catch (Exception e)
             {
-                Log.AddLog("error compressing files " + e);
+                Log.Add("error compressing files " + e);
             }
 
             // send mail if attachment found
@@ -52,7 +52,7 @@ namespace EncryptedEmailBridge.Classes
             }
             else
             {
-                Log.AddLog("attachment nog found, email not sent: " + attachment);
+                Log.Add("attachment nog found, email not sent: " + attachment);
             }
         }
 

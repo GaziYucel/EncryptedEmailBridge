@@ -5,6 +5,19 @@ namespace EncryptedEmailBridge.Classes
 {
     internal static class Util
     {
+        public static bool CheckRequirements()
+        {
+            bool fillVariables = Const.FillVariables();
+            bool createDirectories = Util.CreateDirectories();
+
+            if (!fillVariables) Log.Add("FillVariables not successfull!");
+            if (!createDirectories) Log.Add("CreateDirectories not successfull!");
+
+            if (fillVariables && createDirectories) return true;
+
+            return false;
+        }
+
         public static string ShortenFileName(string file)
         {
             string local = file;
@@ -23,7 +36,7 @@ namespace EncryptedEmailBridge.Classes
                 {
                     local = local.Substring(0, Const.MaxLengthFileName);
                 }
-                Log.AddLog("file name shortened: " + file + " > " + local);
+                Log.Add("file name shortened: " + file + " > " + local);
             }
 
             return local;
@@ -32,15 +45,12 @@ namespace EncryptedEmailBridge.Classes
         public static bool CreateDirectories()
         {
             bool local = true;
-            if (Const.RootPath.Length > 3 && Const.RootPath.Substring(Const.RootPath.Length - 1, 1) != "\\")
-            {
-                Const.RootPath += "\\";
-            }
+           
             string[] dirs = {
                 Const.RootPath,
-                Const.RootPath + Const.RelativeLogDir,
-                Const.RootPath + Const.RelativeProcessingDir,
-                Const.RootPath + Const.RelativeArchiveDir };
+                Const.RootPath + Const.LogDirName,
+                Const.RootPath + Const.ProcessingDirName,
+                Const.RootPath + Const.ArchiveDirName };
 
             foreach (string dir in dirs)
             {
@@ -49,25 +59,28 @@ namespace EncryptedEmailBridge.Classes
                     if (!Directory.Exists(dir))
                     {
                         Directory.CreateDirectory(dir);
-                        Log.AddLog("directory created: " + dir);
+                        Log.Add("directory created: " + dir);
                     }
                 }
                 catch (Exception e)
                 {
-                    Log.AddLog("create directory error: " + dir + " > " + e);
+                    Log.Add("create directory error: " + dir + " > " + e);                    
                     local = false;
                 }
             }
+
             return local;
         }
 
         public static string[] GetFileNamesInDirectory(string path, string extension)
         {
             string[] files = Directory.GetFiles(path, "*." + extension, SearchOption.TopDirectoryOnly);
+
             for (int i = 0; i < files.Length; i++)
             {
                 files[i] = files[i].Replace(path, "");
             }
+
             return files;
         }
 
@@ -81,14 +94,14 @@ namespace EncryptedEmailBridge.Classes
                     {
                         File.Move(
                         path + file,
-                            Const.RootPath + Const.RelativeArchiveDir + "\\" + ShortenFileName(Const.CurrentDateTimeStamp + "_" + file));
+                            Const.RootPath + Const.ArchiveDirName + "\\" + ShortenFileName(Const.CurrentDateTimeStamp + "_" + file));
 
                     }
-                    Log.AddLog("archived " + file + " > " + ShortenFileName(Const.CurrentDateTimeStamp + "_" + file));
+                    Log.Add("archived " + file + " > " + ShortenFileName(Const.CurrentDateTimeStamp + "_" + file));
                 }
                 catch (Exception e)
                 {
-                    Log.AddLog("error archiving " + file + ": " + e);
+                    Log.Add("error archiving " + file + ": " + e);
                 }
             }
         }
@@ -100,16 +113,16 @@ namespace EncryptedEmailBridge.Classes
                 if (File.Exists(filePath + fileName))
                 {
                     File.Delete(filePath + fileName);
-                    Log.AddLog("deleted " + filePath + fileName);
+                    Log.Add("deleted " + filePath + fileName);
                 }
                 else
                 {
-                    Log.AddLog("not deleted (not found) " + filePath + fileName);
+                    Log.Add("not deleted (not found) " + filePath + fileName);
                 }
             }
             catch (Exception e)
             {
-                Log.AddLog("error deleting " + fileName + " " + e);
+                Log.Add("error deleting " + fileName + " " + e);
             }
         }
 
@@ -121,11 +134,11 @@ namespace EncryptedEmailBridge.Classes
                 {
                     File.Move(oldPath, newPath);
                 }
-                Log.AddLog("moved " + oldPath + " > " + newPath);
+                Log.Add("moved " + oldPath + " > " + newPath);
             }
             catch (Exception e)
             {
-                Log.AddLog("error moving " + oldPath + " > " + newPath + " " + e);
+                Log.Add("error moving " + oldPath + " > " + newPath + " " + e);
             }
         }
 
