@@ -1,5 +1,16 @@
 # Change Log
 
+### Version 1.7.0
+
+Notes
+* Update NuGet packages
+* Const class improved
+
+Bugfixes
+* PortEncryption changed to EmailPortEncryption
+
+Enhancements
+
 ### Version 1.6.0
 
 Notes

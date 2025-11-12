@@ -7,13 +7,13 @@ namespace EncryptedEmailBridge.Classes
     {
         public static bool CheckRequirements()
         {
-            bool fillVariables = Const.FillVariables();
-            bool createDirectories = Util.CreateDirectories();
+            bool variablesFilled = Const.VariablesFilled();
+            bool directoriesCreated = Util.CreateDirectories();
 
-            if (!fillVariables) Log.Add("FillVariables not successfull!");
-            if (!createDirectories) Log.Add("CreateDirectories not successfull!");
+            if (!variablesFilled) Log.Add("FillVariables not successfull!");
+            if (!directoriesCreated) Log.Add("CreateDirectories not successfull!");
 
-            if (fillVariables && createDirectories) return true;
+            if (variablesFilled && directoriesCreated) return true;
 
             return false;
         }

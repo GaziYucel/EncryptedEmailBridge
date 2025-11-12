@@ -5,65 +5,44 @@ namespace EncryptedEmailBridge.Classes
 {
     internal static class Const
     {
-        public static string AppName = "EncryptedEmailBridge";
-        public static string LogDirName = "log";
-        public static string ArchiveDirName = "archive";
-        public static string ProcessingDirName = "process";
+        public static string AppName { get; } = "EncryptedEmailBridge";
+        public static string LogDirName { get; } = "log";
+        public static string ArchiveDirName { get; } = "archive";
+        public static string ProcessingDirName { get; } = "process";
 
-        public static string Method = string.Empty;
-        public static string RootPath = string.Empty;
-        public static string Extension = string.Empty;
+        public static string Method { get; } = ConfigurationManager.AppSettings["Method"] ?? string.Empty;
+        public static string RootPath { get; } = ConfigurationManager.AppSettings["RootPath"] ?? string.Empty;
+        public static string Extension { get; } = ConfigurationManager.AppSettings["Extension"] ?? string.Empty;
 
-        public static string EmailHost = string.Empty;
-        public static int EmailPort;
-        public static bool EmailPortEncryption = false;
-        public static string EmailSender = string.Empty;
-        public static string EmailRecipient = string.Empty;
-        public static string EmailUsername = string.Empty;
-        public static string EmailPassword = string.Empty;
+        public static string EmailHost { get; } = ConfigurationManager.AppSettings["EmailHost"] ?? string.Empty;
+        public static int EmailPort { get; } = int.TryParse(ConfigurationManager.AppSettings["EmailPort"], out var port) ? port : 0;
+        public static bool EmailPortEncryption { get; } = (ConfigurationManager.AppSettings["EmailPortEncryption"] == "ssl" || ConfigurationManager.AppSettings["EmailPortEncryption"] == "starttls");
+        public static string EmailSender { get; } = ConfigurationManager.AppSettings["EmailSender"] ?? string.Empty;
+        public static string EmailRecipient { get; } = ConfigurationManager.AppSettings["EmailRecipient"] ?? string.Empty;
+        public static string EmailUsername { get; } = ConfigurationManager.AppSettings["EmailUsername"] ?? string.Empty;
+        public static string EmailPassword { get; } = ConfigurationManager.AppSettings["EmailPassword"] ?? string.Empty;
 
-        public static string EncryptionSecret = string.Empty;
-        public static int HistoryToKeepInDays;
-        public static bool CleanUpLog;
-        public static bool CleanUpArchive;
+        public static string EncryptionSecret { get; } = ConfigurationManager.AppSettings["EncryptionSecret"] ?? string.Empty;
+        public static int HistoryToKeepInDays { get; } = int.TryParse(ConfigurationManager.AppSettings["HistoryToKeepInDays"], out var historyDays) ? historyDays : 0;
+        public static bool CleanUpLog { get; } = bool.TryParse(ConfigurationManager.AppSettings["CleanUpLog"], out var cleanLog) && cleanLog;
+        public static bool CleanUpArchive { get; } = bool.TryParse(ConfigurationManager.AppSettings["CleanUpArchive"], out var cleanArchive) && cleanArchive;
 
-        public static string CurrentDateStamp = DateTime.Now.ToString("yyyyMMdd");
-        public static string CurrentTimeStamp = DateTime.Now.ToString("HHmmss_ffff");
-        public static string CurrentDateTimeStamp = CurrentDateStamp + "_" + CurrentTimeStamp;
-        public static int MaxLengthFileName = 128;
+        public static string CurrentDateStamp { get; } = DateTime.Now.ToString("yyyyMMdd");
+        public static string CurrentTimeStamp { get; } = DateTime.Now.ToString("HHmmss_ffff");
+        public static string CurrentDateTimeStamp { get; } = CurrentDateStamp + "_" + CurrentTimeStamp;
+        public static int MaxLengthFileName { get; } = 128;
 
-        public static bool FillVariables()
+        public static bool VariablesFilled()
         {
             try
             {
-                Method = ConfigurationManager.AppSettings["Method"];
-
-                RootPath = ConfigurationManager.AppSettings["RootPath"];
-                if (RootPath.Length > 3 && RootPath.Substring(RootPath.Length - 1, 1) != "\\") RootPath += "\\";
-                Extension = ConfigurationManager.AppSettings["Extension"];
-
-                EmailHost = ConfigurationManager.AppSettings["EmailHost"];
-                Int32.TryParse(ConfigurationManager.AppSettings["EmailPort"], out EmailPort);
-                string PortEncryption = ConfigurationManager.AppSettings["PortEncryption"];
-                if (PortEncryption == "ssl" || PortEncryption == "starttls") Const.EmailPortEncryption = true;
-                EmailSender = ConfigurationManager.AppSettings["EmailSender"];
-                EmailRecipient = ConfigurationManager.AppSettings["EmailRecipient"];
-                EmailUsername = ConfigurationManager.AppSettings["EmailUsername"];
-                EmailPassword = ConfigurationManager.AppSettings["EmailPassword"];
-
-                EncryptionSecret = ConfigurationManager.AppSettings["EncryptionSecret"];
-
-                Int32.TryParse(ConfigurationManager.AppSettings["HistoryToKeepInDays"], out HistoryToKeepInDays);
-                CleanUpLog = Convert.ToBoolean(ConfigurationManager.AppSettings["CleanUpLog"]);
-                CleanUpArchive = Convert.ToBoolean(ConfigurationManager.AppSettings["CleanUpArchive"]);
-
                 if (
                     !string.IsNullOrEmpty(Method) &&
                     !string.IsNullOrEmpty(RootPath) &&
                     !string.IsNullOrEmpty(Extension) &&
                     !string.IsNullOrEmpty(EmailHost) &&
                     EmailPort != 0 &&
-                    !string.IsNullOrEmpty(PortEncryption) &&
+                    !string.IsNullOrEmpty(EmailPortEncryption.ToString()) &&
                     !string.IsNullOrEmpty(EmailSender) &&
                     !string.IsNullOrEmpty(EmailRecipient) &&
                     !string.IsNullOrEmpty(EmailUsername) &&
@@ -81,7 +60,7 @@ namespace EncryptedEmailBridge.Classes
                         "Extension: " + Extension + " | " +
                         "EmailHost: " + EmailHost + " | " +
                         "EmailPort: " + EmailPort + " | " +
-                        "PortEncryption: " + PortEncryption + " | " +
+                        "EmailPortEncryption: " + EmailPortEncryption + " | " +
                         "EmailSender: " + EmailSender + " | " +
                         "EmailRecipient: " + EmailRecipient + " | " +
                         "EmailUsername: " + EmailUsername + " | " +
